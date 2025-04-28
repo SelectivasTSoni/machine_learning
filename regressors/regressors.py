@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # rf_regressor.py
-
+import time
 import warnings
 import numpy as np
 import pandas as pd
@@ -16,6 +16,13 @@ from sklearn.neural_network     import MLPRegressor
 from sklearn.svm                import SVR
 from sklearn.metrics            import mean_absolute_error, mean_squared_error, r2_score
 
+# This is timer system:
+# start = time.time()
+# ...code goes here...
+# end = time.time()
+# print(f"Runtime: {end - start:.4f} seconds")
+
+start = time.time()
 
 def load_data(path):
     df = pd.read_csv(path)
@@ -143,7 +150,7 @@ def run_decision_tree(X_train, y_train, X_test, y_test):
 # Neural Network (NN) Model
 ##################################
 
-def run_multi_layer_perceptron(X_train, y_train, X_test, y_test);
+def run_multi_layer_perceptron(X_train, y_train, X_test, y_test):
     for l in [50, 100]:
         model = MLPRegressor(
                 max_iter=1500, 
@@ -159,7 +166,7 @@ def run_multi_layer_perceptron(X_train, y_train, X_test, y_test);
 # Support Vector Machine (SVM) Model
 ##################################
 
-def run_support_vector_machine(X_train, y_train, X_test, y_test);
+def run_support_vector_machine(X_train, y_train, X_test, y_test):
     for k in ['poly', 'linear']:
         model = SVR(
             kernel = k,
@@ -176,40 +183,63 @@ def run_support_vector_machine(X_train, y_train, X_test, y_test);
 # Generate missing data.
 # pattern: ampute training data, convert to 0
 # Removes data at random and marks them NaN
-def ampute_mcar(X_complete, missing_rate=0.1):
-    # mcar: Mask Completely At Random
-    M = np.random.binomial(1, missing_rate, size = X_complete.shape)
-    X_obs = X_complete.copy()
-    np.putmask(X_obs, M, np.nan)
-    print('Percentage of newly generated missing values: {}'.\
-      format(np.round(np.sum(np.isnan(X_obs))/X_obs.size,3)))
+# def ampute_mcar(X_complete, missing_rate=0.1):
+#     # mcar: Mask Completely At Random
+#     M = np.random.binomial(1, missing_rate, size = X_complete.shape)
+#     X_obs = X_complete.copy()
+#     np.putmask(X_obs, M, np.nan)
+#     print('Percentage of newly generated missing values: {}'.\
+#       format(np.round(np.sum(np.isnan(X_obs))/X_obs.size,3)))
 
-    # warning if a full row is missing
-    for row in X_obs:
-        if np.all(np.isnan(row)):
-            warnings.warn('Some row(s) contains only nan values.')
-            break
+#     # warning if a full row is missing
+#     for row in X_obs:
+#         if np.all(np.isnan(row)):
+#             warnings.warn('Some row(s) contains only nan values.')
+#             break
 
-    # warning if a full col is missing
-    for col in X_obs.T:
-        if np.all(np.isnan(col)):
-            warnings.warn('Some col(s) contains only nan values.')
-            break
+#     # warning if a full col is missing
+#     for col in X_obs.T:
+#         if np.all(np.isnan(col)):
+#             warnings.warn('Some col(s) contains only nan values.')
+#             break
 
-    X_obs[ np.isnan(X_obs) ] = 0
+#     X_obs[ np.isnan(X_obs) ] = 0
 
-    return X_obs
+#     return X_obs
+
+def ampute_mcar_df(df, missing_rate=0.1):
+    # create a boolean mask DataFrame. We had this using np function as shown above but it gave type error: TypeError: putmask: first argument must be an array. Since we are working in dataframes primarily, we use a mask function from Pandas, see df.mask(M) below.
+    M = pd.DataFrame(
+        np.random.binomial(1, missing_rate, size=df.shape).astype(bool),
+        index=df.index,
+        columns=df.columns
+    )
+    # 2) apply the mask, turning masked cells into NaN
+    df_obs = df.mask(M)
+
+    # report
+    pct = (df_obs.isna().sum().sum() / df_obs.size).round(3)
+    print(f"Percentage of newly generated missing values: {pct}")
+
+    # 3) warnings
+    if any(df_obs.isna().all(axis=1)): warnings.warn("Some row(s) only NaN")
+    if any(df_obs.isna().all(axis=0)): warnings.warn("Some col(s) only NaN")
+
+    # fill NaNs with zero
+    df_filled = df_obs.fillna(0)
+    return df_filled
+
 
 
 ###################################################
 # RFR with missing values 0.20, 0.40, 0.60, 0.80
 ###################################################
 
-def run_rfr_missing_data(X_train, y_train, X_test, y_test)
+def run_rfr_missing_data(X_train, y_train, X_test, y_test):
     for p in [0.2, 0.4, 0.6, 0.8]:
-        X_missing = ampute_mcar(X_train, missing_rate=p)
+        X_missing_df = ampute_mcar_df(X_train, missing_rate=p)
         model = RandomForestRegressor(n_estimators=1000)
-        evaluate_model(model.fit(X_missing, y_train), X_missing, y_train, X_test, y_test)
+        evaluate_model(model.fit(X_missing_df, y_train), X_missing, y_train, X_test, y_test)
 
 
 ###################################################
@@ -218,14 +248,14 @@ def run_rfr_missing_data(X_train, y_train, X_test, y_test)
 
 def run_knn_missing_data(X_train, y_train, X_test, y_test):
     for p in [0.2, 0.4, 0.6, 0.8]:
-        X_missing = ampute_mcar(X_train, missing_rate=p)
+        X_missing_df = ampute_mcar_df(X_train, missing_rate=p)
         model = KNeighborsRegressor()
-        evaluate_model(model.fit(X_missing, y_train), X_missing, y_train, X_test, y_test)
+        evaluate_model(model.fit(X_missing_df, y_train), X_missing, y_train, X_test, y_test)
 
 
 # Main guard and function calls
 if __name__ == "__main__":
-    df = load_data("faultdataset-Bus7.csv")
+    df = load_data("regressors_data.csv")
     X, y = prepare_features(df)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.3, random_state=42
@@ -240,6 +270,9 @@ if __name__ == "__main__":
     run_support_vector_machine(X_train, y_train, X_test, y_test)
     run_rfr_missing_data(X_train, y_train, X_test, y_test)
     run_knn_missing_data(X_train, y_train, X_test, y_test)
+
+    end = time.time()
+    print(f"\nRuntime: {end - start:.4f} seconds")
 
     print("\nEND.")
     
