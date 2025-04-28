@@ -4,20 +4,21 @@
 # Runtime: 1591.4072 seconds
 
 # rf_regressor.py
+
 import time
 import warnings
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot
 
-from sklearn.model_selection    import train_test_split, RandomizedSearchCV, GridSearchCV
-from sklearn.neighbors          import KNeighborsRegressor
-from sklearn.ensemble           import RandomForestRegressor
-from sklearn.tree               import DecisionTreeRegressor
-from sklearn.linear_model       import BayesianRidge
-from sklearn.neural_network     import MLPRegressor
-from sklearn.svm                import SVR
-from sklearn.metrics            import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split, RandomizedSearchCV, GridSearchCV
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.linear_model import BayesianRidge
+from sklearn.neural_network import MLPRegressor
+from sklearn.svm import SVR
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # This is timer system:
 # start = time.time()
@@ -261,8 +262,7 @@ if __name__ == "__main__":
     df = load_data("regressors_data.csv")
     X, y = prepare_features(df)
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.3, random_state=42
-    )
+        X, y, test_size=0.3, random_state=42)
 
     # Run each section in turn:
     run_knn(X_train, y_train, X_test, y_test)
