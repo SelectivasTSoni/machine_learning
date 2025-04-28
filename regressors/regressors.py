@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
+# BE WARNED:
+# Runtime: 1591.4072 seconds
+
 # rf_regressor.py
 import time
 import warnings
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import matplotlib.pyplot
 
 from sklearn.model_selection    import train_test_split, RandomizedSearchCV, GridSearchCV
 from sklearn.neighbors          import KNeighborsRegressor
@@ -239,7 +242,7 @@ def run_rfr_missing_data(X_train, y_train, X_test, y_test):
     for p in [0.2, 0.4, 0.6, 0.8]:
         X_missing_df = ampute_mcar_df(X_train, missing_rate=p)
         model = RandomForestRegressor(n_estimators=1000)
-        evaluate_model(model.fit(X_missing_df, y_train), X_missing, y_train, X_test, y_test)
+        evaluate_model(model.fit(X_missing_df, y_train), X_missing_df, y_train, X_test, y_test)
 
 
 ###################################################
@@ -250,7 +253,7 @@ def run_knn_missing_data(X_train, y_train, X_test, y_test):
     for p in [0.2, 0.4, 0.6, 0.8]:
         X_missing_df = ampute_mcar_df(X_train, missing_rate=p)
         model = KNeighborsRegressor()
-        evaluate_model(model.fit(X_missing_df, y_train), X_missing, y_train, X_test, y_test)
+        evaluate_model(model.fit(X_missing_df, y_train), X_missing_df, y_train, X_test, y_test)
 
 
 # Main guard and function calls
